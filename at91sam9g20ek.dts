@@ -1,0 +1,53 @@
+/*
+ * at91sam9g20ek.dts - Device Tree file for Atmel at91sam9g20ek board
+ *
+ * Copyright (C) 2012 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+ *
+ * Licensed under GPLv2.
+ */
+/dts-v1/;
+#include "at91sam9g20ek_common.dtsi"
+
+/ {
+	model = "Atmel at91sam9g20ek";
+	compatible = "atmel,at91sam9g20ek", "atmel,at91sam9g20", "atmel,at91sam9";
+
+	chosen {
+                u-boot,dm-pre-reloc;
+                stdout-path = &dbgu;
+        };
+
+	memory {
+                reg = <0x20000000 0x2000000>;
+        };
+
+	ahb {
+		apb {
+			usb1: gadget@fffa4000 {
+                                atmel,vbus-gpio = <&pioC 5 GPIO_ACTIVE_HIGH>;
+                                status = "disabled";
+                        };
+
+			usart1: serial@fffb4000 {
+                                status = "disabled";
+                        };
+
+                        macb0: ethernet@fffc4000 {
+                                status = "disabled";
+                        };
+
+                        usb1: gadget@fffa4000 {
+                                status = "disabled";
+                        };
+
+		};
+
+		nand0: nand@40000000 {
+                        nand-bus-width = <16>;
+                        nand-ecc-mode = "soft";
+                        nand-on-flash-bbt;
+                        status = "okay";
+		};
+	};
+
+};
