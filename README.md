@@ -1,13 +1,22 @@
 # SAM9G20 board
 
+A simple demo board that breaks out the At91sam9G20, one of the cheapest AT91 available on eBay/aliexpress now.
+
+The board works well with ram/cpu stress testing except:
+
+- SD card pinout is wrong! Doesnt work
+- The USB-C connector I used is low quality and the plastic melts before the 63/37 solder.
+
+
 ## Memory Map
 
-At91bootstrap       0x0         0x40000
+At91bootstrap       0x0         0x40000 (Actually burned on the AT45, the NAND's boot section is kept blank)
 U-Boot              0x40000     0x80000
 U-Boot Env          0xC0000     0x40000 (We did not use this, just updated built-in env)
-DTB                 0x100000    0x80000 (Did not add the modified DTB either)
+DTB                 0x100000    0x80000 (Did not add the modified DTB either, trying out 2.6 kernel)
 Kernel              0x200000    0x60000
 RootFS              0x800000    -
+
 
 ## Building
 
@@ -64,6 +73,7 @@ Once X is running, the DISPLAY environment variable is set and the Atmel CDC dev
 qemu-amd64 -L /usr/x86_64-linux-gnu/ /home/user1/samba/samba2.17/sam-ba_64
 ```
 
+
 ## SAM-BA Fixes
 SAM-BA's board file for at91sam9g20-ek must be modified because it expects an 8-bit NAND and 32-bit SDRAM but we have 16-bit of both.
 
@@ -71,6 +81,7 @@ Line 82:
 ```
 variable extRamDataBusWidth 16
 ```
+
 
 ## AT91Bootstrap3
 
@@ -85,6 +96,7 @@ Change AT91C_SMC_DBW_WIDTH_BITS_8 to AT91C_SMC_DBW_WIDTH_BITS_16
 ```
 
 SDRAM settings that we're keeping. Just comparing datasheet numbers, nothing to do here.
+The Hynix ram I used matches these on the dot, no performance to be gained by tweaking these without instability.
 ```
 - CLK at 133MHz is 7.52ns
 AT91C_SDRAMC_TWR_3 ? (default 2)
@@ -92,9 +104,8 @@ AT91C_SDRAMC_TRC_9 ? (default 7) (min 20ns from datasheet, > 3)
 AT91C_SDRAMC_TRP_3 default 3 (min 20ns from datasheet, > 3)
 AT91C_SDRAMC_TRCD_3 ? (default 2) (min 20ns from datasheet > 3)
 AT91C_SDRAMC_TRAS_6 ? (default 5) (min 42ns from datasheet, > 6)
-AT91C_SDRAMC_TXSR_10 ? (default 8 / 75.2ns) (nothing in datasheet)
+AT91C_SDRAMC_TXSR_10 ? (default 8 / 75.2ns) (nothing in Hynix datasheet)
 ```
-
 
 
 ## U-Boot
@@ -110,9 +121,9 @@ Reason: The EK board has 64MB ram but we have 32MB so we cannot go over 0x220000
 
 
 ## Linux kernel
-Trying to stay old with 2.6.x, I used 2.6.39.4
+Trying to stay old with 2.6.x, I used 2.6.39.4 and 2.6.32.71
 
-Runs into this bug:
+- Runs into this bug for 2.6.39.x:
 https://bugs.linaro.org/show_bug.cgi?id=928#c7
 Workaround to add `-fno-builtin-memset` in Makefile line 638:
 ```
@@ -127,22 +138,44 @@ I'll test this in the future instead on the command line:
 
 Make sure 16-bit NAND is compiled
 
+- Fix MMC code to add slot[0] where only slot[1] is added:
+In /source/arch/arm/mach-at91/board-sam9g20ek.c:
+ Delete lines 239 and 242 to remove the 2mmc condition.(Didnt have to for 2.6.32)
+
+- Change the LED struct to only have ds1 using PB9 pin:
+```
+static struct gpio_led ek_leds[] = {
+        {       /* "power" led, yellow */
+                .name                   = "ds1",
+                .gpio                   = AT91_PIN_PB9,
+                .default_trigger        = "heartbeat",
+        }
+};
+```
+
+- Under ek_board_init(), comment the last 3 functions because we do not have buttons or sound:
+```
+//      ek_add_device_buttons();
+        /* PCK0 provides MCLK to the WM8731 */
+//      at91_set_B_periph(AT91_PIN_PC1, 0);
+        /* SSC (for WM8731) */
+//      at91_add_device_ssc(AT91SAM9260_ID_SSC, ATMEL_SSC_TX);
+```
+
 
 ## Filesystem
 
-The config has jffs2 which works
+Both jffs2 and UBI works well for my MT29 Micron NAND without tweaking (except for 16bit wide settings above)
 
-Use UBIFS or JFFS2
+Use UBI or JFFS2 image to burn
 
 Somehow all files exist as my local user and not root, so init is run as my user which in the embedded system does not exist.
 
-So before creating the filesystem, run `chown -h root:root /sam9g20/target/etc` etc.
+So before creating the filesystem, run `chown -h root:root /sam9g20/target/bin/busybox`. Do this after any busybox config change because it installs it as my local user and not root.
 
-Run it against /sbin, /bin and their contents as a minimum. The boot will then work as expected.
+The boot will then work as expected.
 
 
 ## TODO
 
-mmc / SD does not show up in the kernel
-spi also doesnt exist.
-
+Try out the latest kernel/buildroot
