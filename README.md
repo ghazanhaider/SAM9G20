@@ -18,23 +18,45 @@ Kernel              0x200000    0x60000
 RootFS              0x800000    -
 
 
-## Building
+## Building and running cheatsheet
 
-- Git clone buildroot. In our case it is `~/buildroot`
+- Git clone buildroot and this repository. 
+In our case it is `~/buildroot` and `~/SAM9G20`
 Trying to use the last 2.6.x kernel, we'll need gcc 4.x latest
 Buildroot 2019.02.11 is the last LTS that provides gcc 4.9.4
-
-- Make an output/build dir. In our case it is `/sam9g20`
-
-- Config buildroot:
 ```
+cd ~
+git clone --depth 1 --branch 2019.02.11 git@github.com:buildroot/buildroot.git
+git clone git@github.com:ghazanhaider/SAM9G20.git
+echo "Make an output/build dir. In our case it is /sam9g20"
+sudo mkdir /sam9g20
+chown user1 /sam9g20
 cd /sam9g20
-make O=$PWD -C ~/buildroot nconfig
+make O=$PWD BR_EXTERNAL=/home/user1/SAM9G20/br2_external -C ~/buildroot list-defconfigs
+make O=$PWD BR_EXTERNAL=/home/user1/SAM9G20/br2_external -C ~/buildroot SAM9G20_defconfig
+echo "Any modifications?"
+make nconfig
+make uboot-nconfig
+make linux-nconfig
+make busybox-nconfig
+echo "Make all but in steps"
+make toolchain
+make at91bootstrap3
+make uboot
+make linux
+make all
+echo "Burn (Need to have sam-ba2.18 setup as per next stage)"
+echo "Connect the board to USB, DBGU pins to a terminal"
+echo "Keep BOOT pressed while pressing RESET and let go"
+echo "The DBGU console should show Romboot followed by a >"
+cd ~/SAM9G20
+sam9g20_writenand.sh
+echo "Press reset once done and enjoy"
 ```
 
-
-
-
+TODO for above:
+- fix at91bootstrap and uboot version
+- Fix device list to add /bin/busybox
 
 
 ## SAM-BA 2.18 Install and run
@@ -122,6 +144,7 @@ Reason: The EK board has 64MB ram but we have 32MB so we cannot go over 0x220000
 
 ## Linux kernel
 Trying to stay old with 2.6.x, I used 2.6.39.4 and 2.6.32.71
+(The provided devicetree works tested with kernel 4.4.302)
 
 - Runs into this bug for 2.6.39.x:
 https://bugs.linaro.org/show_bug.cgi?id=928#c7
