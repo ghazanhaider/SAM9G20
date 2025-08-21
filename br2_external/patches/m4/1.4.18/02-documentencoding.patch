@@ -1,0 +1,12 @@
+From: Santiago Vila <sanvila@debian.org>
+Subject: Use ISO-8859-1 as documentencoding
+X-Debian-version: 1.4.18-3
+
+--- a/doc/m4.texi
++++ b/doc/m4.texi
+@@ -1,4 +1,5 @@
+ \input texinfo @c -*- texinfo -*-
++@documentencoding ISO-8859-1
+ @comment ========================================================
+ @comment %**start of header
+ @setfilename m4.info

@@ -1,6 +1,6 @@
 baudrate=115200
 bootargs=console=ttyS0,115200 root=/dev/mtdblock5 rw ubi.mtd=5 root=ubi0:rootfs rootfstype=ubifs
-bootcmd=nand read 0x21000000 0x200000 0x300000; nand read 0x21800000 0x100000 0x40000; bootz 0x21000000 - 0x21800000
+bootcmd=nand read 0x21000000 0x200000 0x300000; nand read 0x21300000 0x100000 0x40000; bootz 0x21000000 - 0x21300000
 bootdelay=3
 stderr=serial@fffff200
 stdin=serial@fffff200

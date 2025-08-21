@@ -134,5 +134,7 @@
                         linux,default-trigger = "heartbeat";
                 };
 
+		/delete-node/ ds5;
+
         };
 };
