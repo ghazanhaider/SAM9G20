@@ -1,0 +1,11 @@
+--- host-gcc-initial-4.9.4.bak/gcc/reload1.c	2025-08-21 21:51:57.988330640 +0000
++++ host-gcc-initial-4.9.4/gcc/reload1.c	2025-08-21 21:52:18.184813549 +0000
+@@ -441,7 +441,7 @@
+ 
+   while (memory_address_p (QImode, tem))
+     {
+-      spill_indirect_levels++;
++      spill_indirect_levels = spill_indirect_levels + 1;
+       tem = gen_rtx_MEM (Pmode, tem);
+     }
+ 

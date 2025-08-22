@@ -1,0 +1,21 @@
+diff -u -r at91bootstrap3-at91bootstrap-3.x.bak/board/at91sam9g20ek/at91sam9g20ek.c at91bootstrap3-at91bootstrap-3.x/board/at91sam9g20ek/at91sam9g20ek.c
+--- at91bootstrap3-at91bootstrap-3.x.bak/board/at91sam9g20ek/at91sam9g20ek.c	2025-08-22 13:36:15.556735990 +0000
++++ at91bootstrap3-at91bootstrap-3.x/board/at91sam9g20ek/at91sam9g20ek.c	2025-08-22 13:37:46.280589565 +0000
+@@ -100,7 +100,7 @@
+ 	struct sdramc_register sdramc_config;
+ 
+ 	sdramc_config.cr = AT91C_SDRAMC_NC_9 | AT91C_SDRAMC_NR_13 | AT91C_SDRAMC_CAS_3
+-				| AT91C_SDRAMC_NB_4_BANKS | AT91C_SDRAMC_DBW_32_BITS
++				| AT91C_SDRAMC_NB_4_BANKS | AT91C_SDRAMC_DBW_16_BITS
+ 				| AT91C_SDRAMC_TWR_3 | AT91C_SDRAMC_TRC_9
+ 				| AT91C_SDRAMC_TRP_3 | AT91C_SDRAMC_TRCD_3
+ 				| AT91C_SDRAMC_TRAS_6 | AT91C_SDRAMC_TXSR_10;
+@@ -276,7 +276,7 @@
+ 	writel((AT91C_SMC_READMODE
+ 		| AT91C_SMC_WRITEMODE
+ 		| AT91C_SMC_NWAITM_NWAIT_DISABLE
+-		| AT91C_SMC_DBW_WIDTH_BITS_8
++		| AT91C_SMC_DBW_WIDTH_BITS_16
+ 		| AT91_SMC_TDF_(3)),
+ 		AT91C_BASE_SMC + SMC_CTRL3);
+ 
