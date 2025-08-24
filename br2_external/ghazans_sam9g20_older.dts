@@ -12,8 +12,8 @@
         compatible = "atmel,at91sam9g20ek", "atmel,at91sam9g20", "atmel,at91sam9";
 
 	chosen {
-                bootargs = "console=ttyS0,115200 rw ubi.mtd=rootfs root=ubi0:rootfs rootfstype=ubifs";
-                stdout-path = &dbgu;
+                bootargs = "console=ttyS0,115200 root=/dev/mtdblock5 rw ubi.mtd=5 root=ubi0:rootfs rootfstype=ubifs";
+                stdout-path = "serial0:115200n8";
         };
 
         memory {
@@ -55,7 +55,6 @@
                                         spi-max-frequency = <50000000>;
                                         reg = <0>;
                                 };
-				/delete-node/ mtd_dataflash@1 ;
 			};
 
 			spi1: spi@fffcc000 { /* TODO: Need to add spi1 CS as a pin in pinctrl for this */
@@ -71,16 +70,57 @@
 		};
 
 
+		nand0: nand@40000000 {
+			nand-bus-width = <0x10>;
+                        nand-ecc-mode = "soft";
+                        nand-on-flash-bbt;
+                        status = "okay";
+
+			/delete-node/ at91bootstrap@0;
+			/delete-node/ barebox@20000;
+			/delete-node/ bareboxenv@60000;
+			/delete-node/ bareboxenv2@80000;
+			/delete-node/ oftree@80000;
+			/delete-node/ kernel@a0000;
+			/delete-node/ rootfs@4a0000;
+			/delete-node/ data@7ca0000;
+
+			boot@0 { /* Actually empty, bootstrap is on AT45 */
+                                label = "boot";
+                                reg = <0x0 0x40000>;
+                        };
+
+			uboot@40000 {
+                                label = "uboot";
+                                reg = <0x40000 0x80000>;
+                        };
+
+                        env@c0000 {
+                                label = "env";
+                                reg = <0xc0000 0x40000>;
+                        };
+
+                        dtb@100000 {
+                                label = "dtb";
+                                reg = <0x100000 0x80000>;
+                        };
+
+                        kernel@200000 {
+                                label = "kernel";
+                                reg = <0x200000 0x600000>;
+                        };
+
+                        rootfs@800000 {
+                                label = "rootfs";
+                                reg = <0x800000 0xF800000>;
+                        };
+		};
+
 		ebi: ebi@10000000 {
 			nand_controller: nand-controller {
 				nand@3 {
 					nand-bus-width = <0x10>;
-					/delete-node/ partitions;
 					partitions {
-						compatible = "fixed-partitions";
-                                                #address-cells = <1>;
-                                                #size-cells = <1>;
-
 						boot@0 { /* Actually empty, bootstrap is on AT45 */
 			                                label = "boot";
 			                                reg = <0x0 0x40000>;
@@ -117,7 +157,7 @@
 
 	};
 
-	i2c@0 { /* older kernels */
+	i2c@0 {
 		/delete-node/ 24c512@50;
 		/delete-node/ wm8731@1b;
 	};

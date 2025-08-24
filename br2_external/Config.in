@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL_SAM9G20_PATH/package/tinycc/Config.in"

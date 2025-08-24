@@ -12,18 +12,17 @@ The board works well with ram/cpu stress testing except:
 
 At91bootstrap       0x0         0x40000 (Actually burned on the AT45, the NAND's boot section is kept blank)
 U-Boot              0x40000     0x80000
-U-Boot Env          0xC0000     0x40000 (We did not use this, just updated built-in env)
-DTB                 0x100000    0x80000 (Did not add the modified DTB either, trying out 2.6 kernel)
-Kernel              0x200000    0x60000
-RootFS              0x800000    -
+U-Boot Env          0xC0000     0x40000 (Actual size in uboot is 0x20000. Backup location 0x180000 but we dont actually burn the backup copy)
+DTB                 0x100000    0x80000 (Not used for 2.6.x kernels)
+Kernel              0x200000    0x600000
+RootFS              0x800000    0xF800000 (0x10000000 - 0x800000)
 
 
-## Building and running cheatsheet
+## Building and running quickstart
 
 - Git clone buildroot and this repository. 
-In our case it is `~/buildroot` and `~/SAM9G20`
-Trying to use the last 2.6.x kernel, we'll need gcc 4.x latest
-Buildroot 2019.02.11 is the last LTS that provides gcc 4.9.4
+In our case it is `~/buildroot` and `~/SAM9G20`, and user *user1*
+
 ```
 cd ~
 git clone --depth 1 --branch 2019.02.11 git@github.com:buildroot/buildroot.git
@@ -34,11 +33,11 @@ chown user1 /sam9g20
 cd /sam9g20
 make O=$PWD BR_EXTERNAL=/home/user1/SAM9G20/br2_external -C ~/buildroot list-defconfigs
 make O=$PWD BR_EXTERNAL=/home/user1/SAM9G20/br2_external -C ~/buildroot SAM9G20_defconfig
-echo "Any modifications?"
-make nconfig
-make uboot-nconfig
-make linux-nconfig
-make busybox-nconfig
+# echo "Any modifications?"
+# make nconfig
+# make uboot-nconfig
+# make linux-nconfig
+# make busybox-nconfig
 echo "Make all but in steps"
 make toolchain
 make at91bootstrap3
@@ -50,13 +49,14 @@ echo "Connect the board to USB, DBGU pins to a terminal"
 echo "Keep BOOT pressed while pressing RESET and let go"
 echo "The DBGU console should show Romboot followed by a >"
 cd ~/SAM9G20
-sam9g20_writenand.sh
+./sam9g20_burn.sh
 echo "Press reset once done and enjoy"
 ```
 
-TODO for above:
-- fix at91bootstrap and uboot version
-- Fix device list to add /bin/busybox
+Reason for this specific buildroot version:
+- Trying to use the last 2.6.x kernel, we'll need gcc 4.x latest
+- Buildroot 2019.02.11 is the last LTS that provides gcc 4.9.4
+
 
 
 ## SAM-BA 2.18 Install and run
@@ -99,16 +99,24 @@ qemu-amd64 -L /usr/x86_64-linux-gnu/ /home/user1/samba/samba2.17/sam-ba_64
 ## SAM-BA Fixes
 SAM-BA's board file for at91sam9g20-ek must be modified because it expects an 8-bit NAND and 32-bit SDRAM but we have 16-bit of both.
 
-Line 82:
+tcl_lib/at91sam9g20-ek/at91sam9g20-ek.tcl (Line 82):
 ```
 variable extRamDataBusWidth 16
+```
+
+Optionally:
+applets/legacy/at91lib/boards/at91sam9g20-ek/board.h (Line 487):
+```
+#define BOARD_SDRAM_SIZE        (32*1024*1024)  // 64 MB
+...
+#define BOARD_SDRAM_BUSWIDTH    16
 ```
 
 
 ## AT91Bootstrap3
 
-Do not use the 3.8.x version which has a bug.
-Use the latest 3.10.4 from git.
+We use the latest 3.10.4 from git.
+The board file is patched with the provided patch (nothing to do)
 
 Modify:
 build/at91bootstrap3-at91bootstrap-3.x/board/at91sam9g20ek/at91sam9g20ek.c
@@ -131,6 +139,9 @@ AT91C_SDRAMC_TXSR_10 ? (default 8 / 75.2ns) (nothing in Hynix datasheet)
 
 
 ## U-Boot
+
+The board file is patched with the provided patch (nothing to do):
+
 To set default env, modify these vars in include/configs/at91sam9g20ek.h:
 ```
 #define CONFIG_SYS_NAND_DBW_16
@@ -142,7 +153,16 @@ To set default env, modify these vars in include/configs/at91sam9g20ek.h:
 Reason: The EK board has 64MB ram but we have 32MB so we cannot go over 0x22000000
 
 
+
 ## Linux kernel
+
+Tested 4.4.302 and 4.19.x without any patching
+
+The provided dts file covers board specifics
+
+
+### Older kernels
+
 Trying to stay old with 2.6.x, I used 2.6.39.4 and 2.6.32.71
 (The provided devicetree works tested with kernel 4.4.302)
 
@@ -192,13 +212,21 @@ Both jffs2 and UBI works well for my MT29 Micron NAND without tweaking (except f
 
 Use UBI or JFFS2 image to burn
 
-Somehow all files exist as my local user and not root, so init is run as my user which in the embedded system does not exist.
+Add this line to full_devices_table.txt:
+```
+/bin/busybox                            f       755     0       0       -       -       -       -       -
+```
 
-So before creating the filesystem, run `chown -h root:root /sam9g20/target/bin/busybox`. Do this after any busybox config change because it installs it as my local user and not root.
+Reason:
+- All files exist as my local user *user1* and not root, so init/busybox is run as the user that owns it
+- The full_devices_table.txt file modifies the owner just before compiling the package
+- This way the build doesnt have to run as root, yet the init process works
 
-The boot will then work as expected.
 
 
 ## TODO
-
-Try out the latest kernel/buildroot
+lsblk
+socket apps
+python gpio: universalgpio or
+especially through tinycc
+iio or other dht11 controller
