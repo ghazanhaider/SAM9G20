@@ -224,9 +224,53 @@ Reason:
 
 
 
+## TinyCC
+
+I added tinycc to be able to use libiio libgpio etc directly on the device.
+In order to use tinycc, we also need to allow musl/kernel headers and libraries from the staged folder:
+
+```
+diff --git a/package/musl/musl.mk b/package/musl/musl.mk
+index 5db5bbd265..2de1a425d0 100644
+--- a/package/musl/musl.mk
++++ b/package/musl/musl.mk
+@@ -57,8 +57,8 @@ endef
+
+ define MUSL_INSTALL_TARGET_CMDS
+        $(TARGET_MAKE_ENV) $(MAKE) -C $(@D) \
+-               DESTDIR=$(TARGET_DIR) install-libs
+-       $(RM) $(addprefix $(TARGET_DIR)/lib/,crt1.o crtn.o crti.o rcrt1.o Scrt1.o)
++               DESTDIR=$(TARGET_DIR) install-libs install-tools install-headers
++#      $(RM) $(addprefix $(TARGET_DIR)/lib/,crt1.o crtn.o crti.o rcrt1.o Scrt1.o)
+ endef
+
+ $(eval $(generic-package))
+```
+
+.. and Makefile too:
+```
+diff --git a/Makefile b/Makefile
+index 0cbe1076c5..c85e9eb306 100644
+--- a/Makefile
++++ b/Makefile
+@@ -747,9 +747,9 @@ target-finalize: $(PACKAGES) host-finalize
+        ./support/scripts/check-uniq-files -t staging $(BUILD_DIR)/packages-file-list-staging.txt
+        ./support/scripts/check-uniq-files -t host $(BUILD_DIR)/packages-file-list-host.txt
+        $(foreach hook,$(TARGET_FINALIZE_HOOKS),$($(hook))$(sep))
+-       rm -rf $(TARGET_DIR)/usr/include $(TARGET_DIR)/usr/share/aclocal \
+-               $(TARGET_DIR)/usr/lib/pkgconfig $(TARGET_DIR)/usr/share/pkgconfig \
+-               $(TARGET_DIR)/usr/lib/cmake $(TARGET_DIR)/usr/share/cmake
++       # rm -rf $(TARGET_DIR)/usr/include $(TARGET_DIR)/usr/share/aclocal \
++       #       $(TARGET_DIR)/usr/lib/pkgconfig $(TARGET_DIR)/usr/share/pkgconfig \
++       #       $(TARGET_DIR)/usr/lib/cmake $(TARGET_DIR)/usr/share/cmake
+        find $(TARGET_DIR)/usr/{lib,share}/ -name '*.cmake' -print0 | xargs -0 rm -f
+        find $(TARGET_DIR)/lib/ $(TARGET_DIR)/usr/lib/ $(TARGET_DIR)/usr/libexec/ \
+                \( -name '*.a' -o -name '*.la' \) -print0 | xargs -0 rm -f^[[201~
+```
+
+
 ## TODO
 lsblk
 socket apps
 python gpio: universalgpio or
-especially through tinycc
 iio or other dht11 controller
