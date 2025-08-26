@@ -224,7 +224,10 @@ Reason:
 
 
 
-## TinyCC
+## Working Apps
+
+
+### TinyCC
 
 I added tinycc to be able to use libiio libgpio etc directly on the device.
 In order to use tinycc, we also need to allow musl/kernel headers and libraries from the staged folder:
@@ -269,8 +272,69 @@ index 0cbe1076c5..c85e9eb306 100644
 ```
 
 
-## TODO
-lsblk
-socket apps
-python gpio: universalgpio or
-iio or other dht11 controller
+And it works:
+```
+tcc a.c -o a
+```
+
+Or to use some libgpiod example:
+```
+tcc a.c -o a -lgpiod
+```
+
+
+### Libgpiod
+
+Version 1.2.1 installed with this buildroot. The latest for kernel 4.x is 1.6.5
+
+Python bindings are installed too. Just use `import gpiod`
+
+
+### WiringPi
+
+TODO: libwiringPi check:
+```
+#include <wiringPi.h> // Include WiringPi library!
+
+int main(void)
+{
+  // uses BCM numberingof the GPIOs and directly accesses the GPIO registers.
+  wiringPiSetupGpio();
+
+  // pin mode ..(INPUT, OUTPUT, PWM_OUTPUT, GPIO_CLOCK)
+  // set pin 17 to input
+  pinMode(17, INPUT);
+
+  // pull up/down mode (PUD_OFF, PUD_UP, PUD_DOWN) => down
+  pullUpDnControl(17, PUD_DOWN);
+
+  // get state of pin 17
+  int value = digitalRead(17);
+
+  if (HIGH == value)
+  {
+    // your code
+  }
+}
+```
+
+### UniversalGPIO
+
+TODO: Need to create package
+- reqs of flask and flask-cors added
+- Needs python 3.6.6
+
+
+### iio
+
+Direct and python/c checks
+
+
+### DHT controller
+
+- Try with iio driver first (built-in)
+
+
+### spidev
+
+- Try c and python bindings

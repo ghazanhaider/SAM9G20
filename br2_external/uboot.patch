@@ -46,3 +46,14 @@ diff -u -r uboot-2017.11/scripts/dtc/dtc-parser.tab.c_shipped uboot-patched/scri
  # if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
    = { 1, 1, 1, 1 }
  # endif
+diff -u -r uboot-2017.11.bak/disk/Kconfig uboot-2017.11/disk/Kconfig
+--- uboot-2017.11.bak/disk/Kconfig      2025-08-26 16:57:00.615854614 +0000
++++ uboot-2017.11/disk/Kconfig  2025-08-26 16:57:18.738867536 +0000
+@@ -117,4 +117,7 @@
+          Activate the configuration of GUID type
+          for EFI partition
+
++config MTD_PARTITIONS
++       bool "mtd partitions"
++
+ endmenu
