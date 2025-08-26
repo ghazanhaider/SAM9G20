@@ -6,6 +6,7 @@ The board works well with ram/cpu stress testing except:
 
 - SD card pinout is wrong! Doesnt work
 - The USB-C connector I used is low quality and the plastic melts before the 63/37 solder.
+- When a load is on the USB-A port (ethernet dongle), nand flashing fails randomly. The unclean power might be affecting other things too.
 
 
 ## Memory Map
