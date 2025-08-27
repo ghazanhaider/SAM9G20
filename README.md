@@ -59,6 +59,11 @@ Reason for this specific buildroot version:
 - Buildroot 2019.02.11 is the last LTS that provides gcc 4.9.4
 
 
+## The latest buildroot option
+
+Use the 2025.02.5 branch and use the BR_EXTERNAL folder of br_external-2025.02.5
+You cannot go down to kernel 2.6.x and this branch is more work in progress.
+
 
 ## SAM-BA 2.18 Install and run
 

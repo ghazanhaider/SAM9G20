@@ -1,0 +1,59 @@
+diff -u -r uboot-2017.11/include/configs/at91sam9260ek.h uboot-patched/include/configs/at91sam9260ek.h
+--- uboot-2017.11/include/configs/at91sam9260ek.h	2017-11-14 01:08:06.000000000 +0000
++++ uboot-patched/include/configs/at91sam9260ek.h	2025-08-21 15:18:22.138942139 +0000
+@@ -98,7 +98,7 @@
+ #define CONFIG_NAND_ATMEL
+ #define CONFIG_SYS_MAX_NAND_DEVICE	1
+ #define CONFIG_SYS_NAND_BASE		ATMEL_BASE_CS3
+-#define CONFIG_SYS_NAND_DBW_8
++#define CONFIG_SYS_NAND_DBW_16
+ #define CONFIG_SYS_NAND_MASK_ALE	(1 << 21)
+ #define CONFIG_SYS_NAND_MASK_CLE	(1 << 22)
+ #define CONFIG_SYS_NAND_ENABLE_PIN	AT91_PIN_PC14
+@@ -114,10 +114,10 @@
+ #define CONFIG_SYS_USB_OHCI_SLOT_NAME		"at91sam9260"
+ #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
+ 
+-#define CONFIG_SYS_LOAD_ADDR			0x22000000	/* load address */
++#define CONFIG_SYS_LOAD_ADDR			0x21000000	/* load address */
+ 
+ #define CONFIG_SYS_MEMTEST_START		CONFIG_SYS_SDRAM_BASE
+-#define CONFIG_SYS_MEMTEST_END			0x23e00000
++#define CONFIG_SYS_MEMTEST_END			0x21e00000
+ 
+ #ifdef CONFIG_SYS_USE_DATAFLASH_CS0
+ 
+@@ -143,8 +143,8 @@
+ #elif defined(CONFIG_SYS_USE_NANDFLASH)
+ 
+ /* bootstrap + u-boot + env + linux in nandflash */
+-#define CONFIG_ENV_OFFSET		0x120000
+-#define CONFIG_ENV_OFFSET_REDUND	0x100000
++#define CONFIG_ENV_OFFSET		0xC0000
++#define CONFIG_ENV_OFFSET_REDUND	0x180000
+ #define CONFIG_ENV_SIZE		0x20000		/* 1 sector = 128 kB */
+ #define CONFIG_BOOTCOMMAND	"nand read 0x22000000 0x200000 0x300000; bootm"
+ 
+diff -u -r uboot-2017.11/scripts/dtc/dtc-parser.tab.c_shipped uboot-patched/scripts/dtc/dtc-parser.tab.c_shipped
+--- uboot-2017.11/scripts/dtc/dtc-parser.tab.c_shipped	2017-11-14 01:08:06.000000000 +0000
++++ uboot-patched/scripts/dtc/dtc-parser.tab.c_shipped	2025-08-21 15:16:57.474147050 +0000
+@@ -1200,7 +1200,7 @@
+ /* The semantic value of the lookahead symbol.  */
+ YYSTYPE yylval;
+ /* Location data for the lookahead symbol.  */
+-YYLTYPE yylloc
++extern YYLTYPE yylloc;
+ # if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+   = { 1, 1, 1, 1 }
+ # endif
+diff -u -r uboot-2017.11.bak/disk/Kconfig uboot-2017.11/disk/Kconfig
+--- uboot-2017.11.bak/disk/Kconfig      2025-08-26 16:57:00.615854614 +0000
++++ uboot-2017.11/disk/Kconfig  2025-08-26 16:57:18.738867536 +0000
+@@ -117,4 +117,7 @@
+          Activate the configuration of GUID type
+          for EFI partition
+
++config MTD_PARTITIONS
++       bool "mtd partitions"
++
+ endmenu
