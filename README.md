@@ -28,6 +28,8 @@ In our case it is `~/buildroot` and `~/SAM9G20`, and user *user1*
 cd ~
 git clone --depth 1 --branch 2019.02.11 git@github.com:buildroot/buildroot.git
 git clone git@github.com:ghazanhaider/SAM9G20.git
+cd ~/buildroot
+patch -p1 < ../SAM9G20/buildroot-2019.02.11.patch
 echo "Make an output/build dir. In our case it is /sam9g20"
 sudo mkdir /sam9g20
 chown user1 /sam9g20
@@ -63,6 +65,15 @@ Reason for this specific buildroot version:
 
 Use the 2025.02.5 branch and use the BR_EXTERNAL folder of br_external-2025.02.5
 You cannot go down to kernel 2.6.x and this branch is more work in progress.
+
+TODO:
+libgpio WORKS
+tcc
+(libgpio, c, spidev, i2cdev, kernel mod???)
+musl changes DONE?
+i2cdev
+spidev
+
 
 
 ## SAM-BA 2.18 Install and run
@@ -230,6 +241,17 @@ Reason:
 
 
 
+## Busybox
+
+To configure:
+`make busybox-menuconfig`
+
+I enabled these commands:
+- wget+SSL (Just the internal nonchecking SSL to enable downloads)
+- netcat nc ipcalc cal nsenter stat iostat pmap
+
+
+
 ## Working Apps
 
 
@@ -256,7 +278,7 @@ index 5db5bbd265..2de1a425d0 100644
  $(eval $(generic-package))
 ```
 
-.. and Makefile too:
+.. and buildroot/Makefile too:
 ```
 diff --git a/Makefile b/Makefile
 index 0cbe1076c5..c85e9eb306 100644
@@ -296,7 +318,7 @@ Version 1.2.1 installed with this buildroot. The latest for kernel 4.x is 1.6.5
 Python bindings are installed too. Just use `import gpiod`
 
 
-### WiringPi
+### WiringPi (Newer buildroot has this removed. Avoid)
 
 TODO: libwiringPi check:
 ```
@@ -324,23 +346,93 @@ int main(void)
 }
 ```
 
-### UniversalGPIO
 
+### Other useful packages
+
+For a better ps tool, install pstools outside of busybox as well
+
+For the ss network tool, install iproute2
+
+For the *perf* command, install perf under the 'Kernel Tools' section under Kernel instead of packages
+
+
+
+## The post_build.sh scrip does these things:
+
+- disable unneeded services in /etc/init.d
+- Add two more fstab lines for debugfs and tracefs:
+```
+none            /sys/kernel/debug       debugfs defaults 0 0
+none            /sys/kernel/tracing     tracefs rw,relatime,seclabel 0 0
+```
+
+## TODO list
+
+- uboot gibberish
+- tcb boot error?
+`atmel_tcb: probe of fffa0000.timer failed with error -16`
+`atmel_spi fffcc000.spi:   can not allocate dma coherent memory`
+
+
+- bpftool
+Fix compile errors
+
+- UniversalGPIO
 TODO: Need to create package
 - reqs of flask and flask-cors added
-- Needs python 3.6.6
 
 
-### iio
-
+- iio
 Direct and python/c checks
 
 
-### DHT controller
+- DHT11 controller/driver
+Try with iio driver first (built-in)
 
-- Try with iio driver first (built-in)
+
+- spidev
+Try c and python bindings
 
 
-### spidev
 
-- Try c and python bindings
+## Build log
+
+- size. disable kernel:
+cma
+block devs in debugfs
+CONFIG_SERIO
+CONFIG_SERIO_SERPORT
+CONFIG_LEGACY_PTYS
+CONFIG_LDISC_AUTOLOAD
+CONFIG_RANDOM_TRUST_BOOTLOADER
+CONFIG_USB_MON
+CONFIG_AUXDISPLAY
+CONFIG_CPU_SW_DOMAIN_PAN
+
+enabled:
+CONFIG_ATMEL_TCLIB=y
+CONFIG_PWM_ATMEL_TCB=m
+CONFIG_ATMEL_CLOCKSOURCE_TCB is enabled
+- selects ATMEL_TCB_CLKSRC=y
+
+Result: Memory: 26532K/32768K available (3819K kernel code, 375K rwdata, 1080K rodata, 304K init, 95K bss, 6236K reserved, 0K cma-reserved)
+
+disable: CONFIG_ATMEL_TCLIB
+- CONFIG_PWM_ATMEL_TCB=n 
+en:
+CONFIG_PREEMPT
+CONFIG_PROFILING
+CONFIG_RELAY
+CONFIG_BPF_SYSCALL
+CONFIG_UACCESS_WITH_MEMCPY
+CONFIG_JUMP_LABEL
+CONFIG_STACKPROTECTOR
+CONFIG_STACKPROTECTOR_STRONG
+CONFIG_STRICT_KERNEL_RWX
+CONFIG_MQ_IOSCHED_KYBER
+CONFIG_IOSCHED_BFQ
+CONFIG_CMA
+CONFIG_CMA_DEBUGFS
+
+
+
