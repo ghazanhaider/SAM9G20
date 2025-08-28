@@ -63,7 +63,7 @@
 				status = "okay";
 
 				spidev0: spi@0 {
-					compatible = "spidev";
+					compatible = "rohm,dh2228fv"; /* spidev, but spidev.c wants another compat id specified */
 					reg = <0>;
 					spi-max-frequency = <54000000>;
 				};
