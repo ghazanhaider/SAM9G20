@@ -1,6 +1,8 @@
---- a/Makefile	2025-08-27 20:18:16.286240674 +0000
-+++ b/Makefile	2025-08-27 20:19:02.281928710 +0000
-@@ -732,10 +732,10 @@
+diff --git a/Makefile b/Makefile
+index b9ab0f5caa..ba8b526119 100644
+--- a/Makefile
++++ b/Makefile
+@@ -732,12 +732,12 @@ target-finalize: $(PACKAGES) $(TARGET_DIR) host-finalize
  	@$(call MESSAGE,"Finalizing target directory")
  	$(call per-package-rsync,$(sort $(PACKAGES)),target,$(TARGET_DIR),copy)
  	$(foreach hook,$(TARGET_FINALIZE_HOOKS),$($(hook))$(sep))
@@ -13,11 +15,16 @@
 +#		$(TARGET_DIR)/usr/lib/cmake $(TARGET_DIR)/usr/share/cmake \
 +#		$(TARGET_DIR)/usr/lib/rpm $(TARGET_DIR)/usr/doc
  	find $(TARGET_DIR)/usr/{lib,share}/ -name '*.cmake' -print0 | xargs -0 rm -f
- 	find $(TARGET_DIR)/lib/ $(TARGET_DIR)/usr/lib/ $(TARGET_DIR)/usr/libexec/ \
+-	find $(TARGET_DIR)/lib/ $(TARGET_DIR)/usr/lib/ $(TARGET_DIR)/usr/libexec/ \
++#	find $(TARGET_DIR)/lib/ $(TARGET_DIR)/usr/lib/ $(TARGET_DIR)/usr/libexec/ \
  		\( -name '*.a' -o -name '*.la' -o -name '*.prl' \) -print0 | xargs -0 rm -f
---- a/package/musl/musl.mk	2025-08-27 20:13:44.899405396 +0000
-+++ b/package/musl/musl.mk	2025-08-27 20:14:22.699938759 +0000
-@@ -69,8 +69,8 @@
+ ifneq ($(BR2_PACKAGE_GDB),y)
+ 	rm -rf $(TARGET_DIR)/usr/share/gdb
+diff --git a/package/musl/musl.mk b/package/musl/musl.mk
+index 13a49a15eb..d32f25afbd 100644
+--- a/package/musl/musl.mk
++++ b/package/musl/musl.mk
+@@ -69,8 +69,8 @@ endef
  
  define MUSL_INSTALL_TARGET_CMDS
  	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D) \
