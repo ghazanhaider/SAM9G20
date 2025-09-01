@@ -19,11 +19,12 @@ Kernel              0x200000    0x600000
 RootFS              0x800000    0xF800000 (0x10000000 - 0x800000)
 
 
-## Building and running quickstart
+## Quickstart using kernel 2.6.32
 
 - Git clone buildroot and this repository. 
 In our case it is `~/buildroot` and `~/SAM9G20`, and user *user1*
 
+Buildroot version 2019.02.11 for older kernels. (2.6.32.71):
 ```
 cd ~
 git clone --depth 1 --branch 2019.02.11 git@github.com:buildroot/buildroot.git
@@ -34,13 +35,65 @@ echo "Make an output/build dir. In our case it is /sam9g20"
 sudo mkdir /sam9g20
 chown user1 /sam9g20
 cd /sam9g20
-make O=$PWD BR_EXTERNAL=/home/user1/SAM9G20/br2_external -C ~/buildroot list-defconfigs
-make O=$PWD BR_EXTERNAL=/home/user1/SAM9G20/br2_external -C ~/buildroot SAM9G20_defconfig
-# echo "Any modifications?"
-# make nconfig
-# make uboot-nconfig
-# make linux-nconfig
-# make busybox-nconfig
+make O=$PWD BR2_EXTERNAL=/home/user1/SAM9G20/br2_external-2019.02.11 -C ~/buildroot list-defconfigs
+make O=$PWD BR2_EXTERNAL=/home/user1/SAM9G20/br2_external-2019.02.11 -C ~/buildroot SAM9G20-2.6_defconfig
+# Any modifications to do? Look at the next section
+echo "Make all but in steps"
+make toolchain
+make at91bootstrap3
+make uboot
+make linux
+make all
+echo "Burn (Need to have sam-ba2.18 setup as per next stage)"
+echo "Connect the board to USB, DBGU pins to a terminal"
+echo "Keep BOOT pressed while pressing RESET and let go"
+echo "The DBGU console should show Romboot followed by a >"
+cd ~/SAM9G20
+./2.6_burn.sh
+echo "Press reset once done and enjoy"
+```
+
+
+Things that should work
+- NAND partitions, and successful boot to UBIFS
+- ds1 LED heartbeat
+- spidev and i2cdev(using gpio i2c?) devices in /dev, when modules are loaded
+- g_serial and getty able to service /dev/ttyGS0
+- tcc should compile code against c libraries
+- python3 should be able to use libgpiod
+- /etc/init.d big services should have been disabled
+- debugfs and tracefs filesystems
+- latencytop
+- Eventually: tcc to compile a kernel module
+
+We cannot use:
+- linux-tools-perf (needs uclibc/libelf)
+- gdb or gdbserver at either end... compiler errors
+- libgpiod
+
+
+
+Reason for the older buildroot version:
+- Trying to use the last 2.6.x kernel, we'll need gcc 4.9.x latest
+- Buildroot 2019.02.11 is the last LTS that provides gcc 4.9.4
+
+
+## Quickstart using kernel 5.15.190
+
+Buildroot version 2025.02.5 for newer kernels (5.15.190):
+```
+cd ~
+git clone --depth 1 --branch 2025.02.5 git@github.com:buildroot/buildroot.git
+git clone git@github.com:ghazanhaider/SAM9G20.git
+cd ~/buildroot
+patch -p1 < ../SAM9G20/buildroot-2025.02.5.patch
+echo "Make an output/build dir. In our case it is /sam9g20"
+sudo mkdir /sam9g20
+chown user1 /sam9g20
+cd /sam9g20
+make O=$PWD BR2_EXTERNAL=/home/user1/SAM9G20/br2_external-2025.02.5 -C ~/buildroot list-defconfigs
+make O=$PWD BR2_EXTERNAL=/home/user1/SAM9G20/br2_external-2025.02.5 -C ~/buildroot SAM9G20_defconfig
+# Any modifications to do? Look at the next section
 echo "Make all but in steps"
 make toolchain
 make at91bootstrap3
@@ -56,23 +109,43 @@ cd ~/SAM9G20
 echo "Press reset once done and enjoy"
 ```
 
-Reason for this specific buildroot version:
-- Trying to use the last 2.6.x kernel, we'll need gcc 4.x latest
-- Buildroot 2019.02.11 is the last LTS that provides gcc 4.9.4
+This should work:
+- linux-tools-perf  (How to skip perf's docs or install host-python3-asciidoc?)
+- tcc+libgpio WORKS
+- micropython (does nothing on unix port, no GPIO/SPI etc)
+- i2cdev spidev devices
+- debugfs tracefs
+- strace a tcc
 
-
-## The latest buildroot option
-
-Use the 2025.02.5 branch and use the BR_EXTERNAL folder of br_external-2025.02.5
-You cannot go down to kernel 2.6.x and this branch is more work in progress.
 
 TODO:
-libgpio WORKS
-tcc
-(libgpio, c, spidev, i2cdev, kernel mod???)
-musl changes DONE?
-i2cdev
-spidev
+test suspent to ram
+tcc WORKS except for float/num compilation ?!?
+micropython?
+gdbserver?
+kernel shark?
+kgdb?
+
+
+
+## Modifications
+To make changes:
+```
+make nconfig
+make at91bootstrap3-menuconfig
+make uboot-nconfig
+make linux-nconfig
+make busybox-menuconfig
+```
+
+To save tested changes back:
+```
+make uboot-update-config
+make linux-update-config
+make busybox-update-config
+
+cp .config ~/SAM9G20/br2_external-2025.02.5/configs/SAM9G20_defconfig3
+```
 
 
 
@@ -157,6 +230,8 @@ AT91C_SDRAMC_TXSR_10 ? (default 8 / 75.2ns) (nothing in Hynix datasheet)
 
 ## U-Boot
 
+(Fix for uboot 2017.11, we do not need this for the newer buildroot set)
+
 The board file is patched with the provided patch (nothing to do):
 
 To set default env, modify these vars in include/configs/at91sam9g20ek.h:
@@ -225,7 +300,9 @@ static struct gpio_led ek_leds[] = {
 
 ## Filesystem
 
-Both jffs2 and UBI works well for my MT29 Micron NAND without tweaking (except for 16bit wide settings above)
+Both jffs2 and UBI works well for my MT29 Micron NAND without tweaking.
+
+I used jffs2 without issues in the first run. Now both configs use ubifs
 
 Use UBI or JFFS2 image to burn
 
@@ -310,6 +387,9 @@ Or to use some libgpiod example:
 tcc a.c -o a -lgpiod
 ```
 
+It failed for math operations like `x = y % 2;`
+Math emulation doesnt exist in tinycc and we do not have vfp in our sam9g20
+
 
 ### Libgpiod
 
@@ -368,12 +448,6 @@ none            /sys/kernel/tracing     tracefs rw,relatime,seclabel 0 0
 
 ## TODO list
 
-- uboot gibberish
-- tcb boot error?
-`atmel_tcb: probe of fffa0000.timer failed with error -16`
-`atmel_spi fffcc000.spi:   can not allocate dma coherent memory`
-
-
 - bpftool
 Fix compile errors
 
@@ -381,24 +455,26 @@ Fix compile errors
 TODO: Need to create package
 - reqs of flask and flask-cors added
 
-
 - iio
 Direct and python/c checks
-
 
 - DHT11 controller/driver
 Try with iio driver first (built-in)
 
-
 - spidev
 Try c and python bindings
 
+- linux-tools-perf
+Compile fails unless we add NO_LIBBPF=1 in the MAKE FLAGS in buildroot/package/linux-tools/linux-tool-perf.mk.in
 
 
 ## Build log
 
-- size. disable kernel:
-cma
+### Small kernel:
+
+Disabled options:
+CONFIG_CMA
+CONFIG_CMA_DEBUGFS
 block devs in debugfs
 CONFIG_SERIO
 CONFIG_SERIO_SERPORT
@@ -417,9 +493,12 @@ CONFIG_ATMEL_CLOCKSOURCE_TCB is enabled
 
 Result: Memory: 26532K/32768K available (3819K kernel code, 375K rwdata, 1080K rodata, 304K init, 95K bss, 6236K reserved, 0K cma-reserved)
 
+
+### Complete kernel:
+
 disable: CONFIG_ATMEL_TCLIB
 - CONFIG_PWM_ATMEL_TCB=n 
-en:
+enabled:
 CONFIG_PREEMPT
 CONFIG_PROFILING
 CONFIG_RELAY
@@ -435,4 +514,14 @@ CONFIG_CMA
 CONFIG_CMA_DEBUGFS
 
 
+Result: Memory: 23668K/32768K available (5120K kernel code, 396K rwdata, 1144K rodata, 1024K init, 99K bss, 9100K reserved, 0K cma-reserved)
 
+
+### Similar 5.15 kernel:
+
+Result: Memory: 23584K/32768K available (5120K kernel code, 469K rwdata, 1196K rodata, 1024K init, 102K bss, 9184K reserved, 0K cma-reserved)
+
+
+### And 2.6.32:
+
+Memory: 29120KB available (2888K code, 329K data, 100K init, 0K highmem)
