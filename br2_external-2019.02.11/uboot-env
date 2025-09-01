@@ -1,5 +1,5 @@
 baudrate=115200
-bootargs=console=ttyS0,115200 rw ubi.mtd=rootfs root=ubi0:rootfs rootfstype=ubifs
+bootargs=console=ttyS0,115200 rw mtdparts=atmel_nand:256k(bootstrap)ro,512k(uboot)ro,256k(env),512k(dtb),6M(kernel)ro,-(rootfs) ubi.mtd=rootfs root=ubi0:rootfs rootfstype=ubifs
 bootcmd=nand read 0x21000000 0x200000 0x300000; bootz 0x21000000
 bootdelay=3
 stderr=serial@fffff200
