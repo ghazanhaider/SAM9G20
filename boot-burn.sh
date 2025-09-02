@@ -7,7 +7,7 @@ samba_path="/home/user1/samba/samba2.18"
 serial_port="/dev/ttyACM0"
 
 br_images_path="/sam9g20/images"
-files=( "boot.bin" "u-boot.bin" "uboot-env.bin" "ghazans_sam9g20.dtb" "zImage" "rootfs.ubi" )
+files=( "boot.bin" )
 
 if [ ! -w "$serial_port" ]; then
   echo "Error: Serial port '$serial_port' not found."
@@ -33,8 +33,6 @@ done
 
 # Everything is good. Lets flash!
 
-#echo "Flashing At91Bootstrap3 to AT45 Dataflash"
-#sudo qemu-amd64 -L /usr/x86_64-linux-gnu/ ${samba_path}/sam-ba_64 /dev/ttyACM0 at91sam9g20-ek samba_at45_write.tcl /sam9g20/images
+echo "Flashing At91Bootstrap3 to AT45 Dataflash"
+sudo qemu-amd64 -L /usr/x86_64-linux-gnu/ ${samba_path}/sam-ba_64 /dev/ttyACM0 at91sam9g20-ek boot.tcl ${br_images_path}
 
-echo "Flashing uboot NAND"
-sudo qemu-amd64 -L /usr/x86_64-linux-gnu/ ${samba_path}/sam-ba_64 /dev/ttyACM0 at91sam9g20-ek uboot.tcl ${br_images_path}
