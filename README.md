@@ -525,3 +525,4 @@ Result: Memory: 23584K/32768K available (5120K kernel code, 469K rwdata, 1196K r
 ### And 2.6.32:
 
 Memory: 29120KB available (2888K code, 329K data, 100K init, 0K highmem)
+Memory: 29160KB available (2836K code, 346K data, 100K init, 0K highmem)
